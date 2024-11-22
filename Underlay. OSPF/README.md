@@ -48,4 +48,184 @@ Leaf3|Eth1|10.2.1.5|255.255.255.254|p2p
 Leaf3|Eth2|10.2.2.5|255.255.255.254|p2p
 Leaf3|*__Lo1__*|10.0.0.3|255.255.255.255|Loopback1
 
+### Настройка сетевых устройств
+#### Настройка OSPF на Spine1
+Запускаем процесс OSPF 1, в качестве router-id указываем адрес Loopback1, переводит все интерфейсы в пассивный режим, за исключением наших __p2p__ линков.
+```
+!
+router ospf 1
+   router-id 10.0.1.0
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   no passive-interface Ethernet3
+   max-lsa 12000
+!
+end
+Spine1#
+```
+На интерфейсах указываем тип сети и номер __area__
+
+```
+interface Ethernet1
+   description to_Leaf1
+   no switchport
+   ip address 10.2.1.0/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet2
+   description to_Leaf2
+   no switchport
+   ip address 10.2.1.2/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet3
+   description to_Leaf3
+   no switchport
+   ip address 10.2.1.4/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+```
+
+*__Аналогично выполняем настройки на всех сетевых устройствах в нашей AREA__*
+#### Настройка OSPF на Spine2
+```
+!
+interface Ethernet1
+   description to_Leaf1
+   no switchport
+   ip address 10.2.2.0/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet2
+   description to_Leaf2
+   no switchport
+   ip address 10.2.2.2/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet3
+   description to_Leaf3
+   no switchport
+   ip address 10.2.2.4/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Loopback1
+   ip address 10.0.2.0/32
+   ip ospf area 0.0.0.0
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.2.0
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   no passive-interface Ethernet3
+   max-lsa 12000
+!
+end
+Spine2#
+```
+#### Настройка OSPF на Leaf1
+```
+!
+interface Ethernet1
+   description to_Spine1
+   no switchport
+   ip address 10.2.1.1/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet2
+   description to_Spine2
+   no switchport
+   ip address 10.2.2.1/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Loopback1
+   ip address 10.0.0.1/32
+   ip ospf area 0.0.0.0
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.1
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   max-lsa 12000
+!
+end
+Leaf1#
+```
+#### Настройка OSPF на Leaf2
+```
+interface Ethernet1
+   description to_Spine1
+   no switchport
+   ip address 10.2.1.3/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet2
+   description to_Spine2
+   no switchport
+   ip address 10.2.2.3/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Loopback1
+   ip address 10.0.0.2/32
+   ip ospf area 0.0.0.0
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.2
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   max-lsa 12000
+!
+end
+Leaf2#
+```
+#### Настройка OSPF на Leaf3
+```
+interface Ethernet1
+   description to_Spine1
+   no switchport
+   ip address 10.2.1.5/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Ethernet2
+   description to_Spine2
+   no switchport
+   ip address 10.2.2.5/31
+   ip ospf network point-to-point
+   ip ospf area 0.0.0.0
+!
+interface Loopback1
+   ip address 10.0.0.3/32
+   ip ospf area 0.0.0.0
+!
+ip routing
+!
+router ospf 1
+   router-id 10.0.0.3
+   passive-interface default
+   no passive-interface Ethernet1
+   no passive-interface Ethernet2
+   max-lsa 12000
+!
+end
+Leaf3#
+```
 
