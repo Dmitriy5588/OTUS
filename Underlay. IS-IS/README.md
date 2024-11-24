@@ -131,6 +131,7 @@ router isis 100
 end
 Spine2#
 ```
+</details>
 
 <details>
   
@@ -166,6 +167,7 @@ router isis 100
 end
 Leaf1#
 ```
+</details>
 
 <details>
   
@@ -201,6 +203,7 @@ router isis 100
 end
 Leaf2#
 ```
+</details>
 
 <details>
   
@@ -236,4 +239,8 @@ router isis 100
 end
 Leaf3#
 ```
+</details>
+
+
+
 
