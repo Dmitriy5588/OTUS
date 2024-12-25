@@ -56,12 +56,12 @@ Leaf3|Eth2|10.2.2.5|255.255.255.254|Eth2
 
 |VLAN|IP address/mask|Связанные PC|
 |---|---|---|
-10|192.168.0.50/24|VPC#1
+10|192.168.0.50/24|VPC#3
 10|192.168.0.101/24|VPC#6
 20|192.168.2.200/24|VPC#2
 20|192.168.2.100/24|VPC#4
 30|192.168.31.20/24|VPC#1
-40|192.168.31.10/24|VPC#5
+30|192.168.31.10/24|VPC#5
 
 </details>
 
@@ -353,6 +353,191 @@ router bgp 65004
 !
 ```
 </details>
+
+#### IP адреса на VPC назначим согласно Vlan таблице.
+### Итоговая проверка связанности между PC и таблиц MAC VRF
+Запустим ping между VPC.
+#### Между VPC#1 и VPC#5
+```
+VPCS> ping 192.168.31.10
+
+84 bytes from 192.168.31.10 icmp_seq=1 ttl=64 time=26.403 ms
+84 bytes from 192.168.31.10 icmp_seq=2 ttl=64 time=30.005 ms
+84 bytes from 192.168.31.10 icmp_seq=3 ttl=64 time=14.327 ms
+84 bytes from 192.168.31.10 icmp_seq=4 ttl=64 time=28.007 ms
+84 bytes from 192.168.31.10 icmp_seq=5 ttl=64 time=16.103 ms
+```
+
+#### Между VPC#2 и VPC#4
+```
+VPCS> ping 192.168.2.100
+
+84 bytes from 192.168.2.100 icmp_seq=1 ttl=64 time=16.002 ms
+84 bytes from 192.168.2.100 icmp_seq=2 ttl=64 time=14.891 ms
+84 bytes from 192.168.2.100 icmp_seq=3 ttl=64 time=30.729 ms
+84 bytes from 192.168.2.100 icmp_seq=4 ttl=64 time=27.086 ms
+84 bytes from 192.168.2.100 icmp_seq=5 ttl=64 time=27.754 ms
+```
+#### Между VPC#3 и VPC#6
+```
+VPCS> ping 192.168.0.101
+
+84 bytes from 192.168.0.101 icmp_seq=1 ttl=64 time=16.388 ms
+84 bytes from 192.168.0.101 icmp_seq=2 ttl=64 time=13.063 ms
+84 bytes from 192.168.0.101 icmp_seq=3 ttl=64 time=14.670 ms
+84 bytes from 192.168.0.101 icmp_seq=4 ttl=64 time=27.271 ms
+84 bytes from 192.168.0.101 icmp_seq=5 ttl=64 time=12.746 ms
+```
+
+#### Проверим, какие маршруты мы получаем в AFI EVPN:
+```
+Leaf1#show bgp evpn
+BGP routing table information for VRF default
+Router identifier 10.0.0.1, local AS number 65002
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 10.0.0.1:30 mac-ip 0050.7966.6806
+                                 -                     -       -       0       i
+ * >Ec    RD: 10.0.0.2:10 mac-ip 0050.7966.6807
+                                 10.0.0.2              -       100     0       65001 65003 i
+ *  ec    RD: 10.0.0.2:10 mac-ip 0050.7966.6807
+                                 10.0.0.2              -       100     0       65001 65003 i
+ * >Ec    RD: 10.0.0.3:30 mac-ip 0050.7966.6808
+                                 10.0.0.3              -       100     0       65001 65004 i
+ *  ec    RD: 10.0.0.3:30 mac-ip 0050.7966.6808
+                                 10.0.0.3              -       100     0       65001 65004 i
+ * >      RD: 10.0.0.1:20 mac-ip 0050.7966.6809
+                                 -                     -       -       0       i
+ * >Ec    RD: 10.0.0.2:20 mac-ip 0050.7966.680a
+                                 10.0.0.2              -       100     0       65001 65003 i
+ *  ec    RD: 10.0.0.2:20 mac-ip 0050.7966.680a
+                                 10.0.0.2              -       100     0       65001 65003 i
+ * >Ec    RD: 10.0.0.3:10 mac-ip 0050.7966.680b
+                                 10.0.0.3              -       100     0       65001 65004 i
+ *  ec    RD: 10.0.0.3:10 mac-ip 0050.7966.680b
+                                 10.0.0.3              -       100     0       65001 65004 i
+ * >      RD: 10.0.0.1:20 imet 10.0.0.1
+                                 -                     -       -       0       i
+ * >      RD: 10.0.0.1:30 imet 10.0.0.1
+                                 -                     -       -       0       i
+ * >Ec    RD: 10.0.0.2:10 imet 10.0.0.2
+                                 10.0.0.2              -       100     0       65001 65003 i
+ *  ec    RD: 10.0.0.2:10 imet 10.0.0.2
+                                 10.0.0.2              -       100     0       65001 65003 i
+ * >Ec    RD: 10.0.0.2:20 imet 10.0.0.2
+                                 10.0.0.2              -       100     0       65001 65003 i
+ *  ec    RD: 10.0.0.2:20 imet 10.0.0.2
+                                 10.0.0.2              -       100     0       65001 65003 i
+ * >Ec    RD: 10.0.0.3:10 imet 10.0.0.3
+                                 10.0.0.3              -       100     0       65001 65004 i
+ *  ec    RD: 10.0.0.3:10 imet 10.0.0.3
+                                 10.0.0.3              -       100     0       65001 65004 i
+ * >Ec    RD: 10.0.0.3:30 imet 10.0.0.3
+                                 10.0.0.3              -       100     0       65001 65004 i
+ *  ec    RD: 10.0.0.3:30 imet 10.0.0.3
+                                 10.0.0.3              -       100     0       65001 65004 i
+Leaf1#
+
+```
+#### Маршруты на Spine1:
+```
+Spine1#show bgp evpn route-type mac-ip detail
+BGP routing table information for VRF default
+Router identifier 10.0.1.0, local AS number 65001
+BGP routing table entry for mac-ip 0050.7966.6806, Route Distinguisher: 10.0.0.1:30
+ Paths: 1 available
+  65002
+    10.0.0.1 from 10.2.1.1 (10.0.0.1)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, best
+      Extended Community: Route-Target-AS:30:3000 TunnelEncap:tunnelTypeVxlan
+      VNI: 3000 ESI: 0000:0000:0000:0000:0000
+BGP routing table entry for mac-ip 0050.7966.6807, Route Distinguisher: 10.0.0.2:10
+ Paths: 1 available
+  65003
+    10.0.0.2 from 10.2.1.3 (10.0.0.2)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, best
+      Extended Community: Route-Target-AS:10:1000 TunnelEncap:tunnelTypeVxlan
+      VNI: 1000 ESI: 0000:0000:0000:0000:0000
+BGP routing table entry for mac-ip 0050.7966.6808, Route Distinguisher: 10.0.0.3:30
+ Paths: 1 available
+  65004
+    10.0.0.3 from 10.2.1.5 (10.0.0.3)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, best
+      Extended Community: Route-Target-AS:30:3000 TunnelEncap:tunnelTypeVxlan
+      VNI: 3000 ESI: 0000:0000:0000:0000:0000
+BGP routing table entry for mac-ip 0050.7966.6809, Route Distinguisher: 10.0.0.1:20
+ Paths: 1 available
+  65002
+    10.0.0.1 from 10.2.1.1 (10.0.0.1)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, best
+      Extended Community: Route-Target-AS:20:2000 TunnelEncap:tunnelTypeVxlan
+      VNI: 2000 ESI: 0000:0000:0000:0000:0000
+BGP routing table entry for mac-ip 0050.7966.680a, Route Distinguisher: 10.0.0.2:20
+ Paths: 1 available
+  65003
+    10.0.0.2 from 10.2.1.3 (10.0.0.2)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, best
+      Extended Community: Route-Target-AS:20:2000 TunnelEncap:tunnelTypeVxlan
+      VNI: 2000 ESI: 0000:0000:0000:0000:0000
+BGP routing table entry for mac-ip 0050.7966.680b, Route Distinguisher: 10.0.0.3:10
+ Paths: 1 available
+  65004
+    10.0.0.3 from 10.2.1.5 (10.0.0.3)
+      Origin IGP, metric -, localpref 100, weight 0, tag 0, valid, external, best
+      Extended Community: Route-Target-AS:10:1000 TunnelEncap:tunnelTypeVxlan
+      VNI: 1000 ESI: 0000:0000:0000:0000:0000
+Spine1#
+```
+Route Target те, которые мы настроили, благодаря чему наши Leaf'ы смогут импортировать маршруты в нужный MAC-VRF.
+
+#### Проверим наш EVI на примере Leaf1:
+```
+Leaf1#show bgp evpn instance
+EVPN instance: VLAN 20
+  Route distinguisher: 0:0
+  Route target import: Route-Target-AS:20:2000
+  Route target export: Route-Target-AS:20:2000
+  Service interface: VLAN-based
+  Local VXLAN IP address: 10.0.0.1
+  VXLAN: enabled
+  MPLS: disabled
+EVPN instance: VLAN 30
+  Route distinguisher: 0:0
+  Route target import: Route-Target-AS:30:3000
+  Route target export: Route-Target-AS:30:3000
+  Service interface: VLAN-based
+  Local VXLAN IP address: 10.0.0.1
+  VXLAN: enabled
+  MPLS: disabled
+Leaf1#
+```
+
+#### Ещё несколько команд вывода для проверки 
+```
+Leaf1#show vxlan control-plane
+   VLAN       Control Plane       Direction    Source
+---------- ------------------- --------------- -------------
+   20         EVPN                both         configuration
+   30         EVPN                both         configuration
+```
+```
+Leaf1#show vxlan vtep
+Remote VTEPS for Vxlan1:
+
+VTEP           Tunnel Type(s)
+-------------- --------------
+10.0.0.2       flood
+10.0.0.3       flood
+
+Total number of remote VTEPS:  2
+Leaf1#
+```
+
+### Мы убедились, что клиенты видят друг друга на 2-ом уровне
 
 
 
