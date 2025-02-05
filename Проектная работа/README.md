@@ -565,6 +565,157 @@ router bgp 65002
 ```
 </details>
 
+#### Логическая связка DCI проходит между ЦОД на устройствах Spine1 и Spine2-1, по протоколу eBGP. Физическое подключение выполнено на устройствах Border_Leaf двумя L3 линками для отказоустойчивости.
 
+### Проверка работы Vxlan фабрики
+#### Обнаружение соседств и связности на устройстве Leaf1 в основном ЦОД
+```
+Leaf1#show vxlan vtep
+Remote VTEPS for Vxlan1:
 
+VTEP          Tunnel Type(s)
+------------- --------------
+1.1.1.2       flood
+1.1.1.3       flood
+2.2.2.1       flood
+2.2.2.3       flood
+
+Total number of remote VTEPS:  4
+Leaf1#
+```
+```
+Leaf1#show ip ospf neighbor
+Neighbor ID     Instance VRF      Pri State                  Dead Time   Address         Interface
+11.11.11.11     1        default  0   FULL                   00:00:36    10.1.1.1        Ethernet1
+Leaf1#show ip route ospf
+
+VRF: default
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+ O        1.1.1.2/32 [110/30] via 10.1.1.1, Ethernet1
+ O        1.1.1.3/32 [110/30] via 10.1.1.1, Ethernet1
+ O IA     2.2.2.1/32 [110/60] via 10.1.1.1, Ethernet1
+ O IA     2.2.2.3/32 [110/40] via 10.1.1.1, Ethernet1
+ O        10.1.2.0/30 [110/20] via 10.1.1.1, Ethernet1
+ O        10.1.3.0/30 [110/20] via 10.1.1.1, Ethernet1
+ O        11.11.11.11/32 [110/20] via 10.1.1.1, Ethernet1
+ O IA     20.1.1.0/30 [110/50] via 10.1.1.1, Ethernet1
+ O IA     20.1.3.0/30 [110/40] via 10.1.1.1, Ethernet1
+ O IA     22.22.22.22/32 [110/50] via 10.1.1.1, Ethernet1
+ O IA     100.1.1.0/30 [110/30] via 10.1.1.1, Ethernet1
+ O IA     100.1.2.0/30 [110/30] via 10.1.1.1, Ethernet1
+
+Leaf1#
+```
+Все маршруты в Underlay сети находятся в таблице.
+
+#### Обнаружение соседств и связности на устройстве Leaf2-1 в резервном ЦОД
+```
+Leaf2-1#show vxlan vtep
+Remote VTEPS for Vxlan1:
+
+VTEP          Tunnel Type(s)
+------------- --------------
+1.1.1.1       flood
+1.1.1.2       flood
+1.1.1.3       flood
+2.2.2.3       flood
+
+Total number of remote VTEPS:  4
+```
+```
+Leaf2-1#show ip route ospf
+
+VRF: default
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+ O IA     1.1.1.1/32 [110/60] via 20.1.1.1, Ethernet1
+ O IA     1.1.1.2/32 [110/60] via 20.1.1.1, Ethernet1
+ O IA     1.1.1.3/32 [110/40] via 20.1.1.1, Ethernet1
+ O        2.2.2.3/32 [110/30] via 20.1.1.1, Ethernet1
+ O IA     10.1.1.0/30 [110/50] via 20.1.1.1, Ethernet1
+ O IA     10.1.2.0/30 [110/50] via 20.1.1.1, Ethernet1
+ O IA     10.1.3.0/30 [110/40] via 20.1.1.1, Ethernet1
+ O IA     11.11.11.11/32 [110/50] via 20.1.1.1, Ethernet1
+ O        20.1.3.0/30 [110/20] via 20.1.1.1, Ethernet1
+ O        22.22.22.22/32 [110/20] via 20.1.1.1, Ethernet1
+ O IA     100.1.1.0/30 [110/30] via 20.1.1.1, Ethernet1
+ O IA     100.1.2.0/30 [110/30] via 20.1.1.1, Ethernet1
+
+Leaf2-1#
+```
+
+#### Для примера выполним команду ping из основного ЦОД в резервный, host1 - host3.
+```
+VPCS> ping 192.168.0.200
+
+84 bytes from 192.168.0.200 icmp_seq=1 ttl=64 time=52.216 ms
+84 bytes from 192.168.0.200 icmp_seq=2 ttl=64 time=33.975 ms
+84 bytes from 192.168.0.200 icmp_seq=3 ttl=64 time=58.426 ms
+84 bytes from 192.168.0.200 icmp_seq=4 ttl=64 time=31.495 ms
+84 bytes from 192.168.0.200 icmp_seq=5 ttl=64 time=27.188 ms
+
+VPCS>
+```
+#### Вывод таблициы EVPN на примере Leaf1
+```
+Leaf1#show bgp evpn
+BGP routing table information for VRF default
+Router identifier 1.1.1.1, local AS number 65001
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 1.1.1.1:10 mac-ip 0050.7966.6807
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.1:10 mac-ip 0050.7966.6807 192.168.0.100
+                                 -                     -       -       0       i
+ * >      RD: 2.2.2.1:10 mac-ip 0050.7966.680a
+                                 2.2.2.1               -       100     0       65002 i
+ * >      RD: 1.1.1.1:10 imet 1.1.1.1
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.1:20 imet 1.1.1.1
+                                 -                     -       -       0       i
+ * >      RD: 1.1.1.2:10 imet 1.1.1.2
+                                 1.1.1.2               -       100     0       i Or-ID: 1.1.1.2 C-LST: 11.11.11.11
+ * >      RD: 1.1.1.2:20 imet 1.1.1.2
+                                 1.1.1.2               -       100     0       i Or-ID: 1.1.1.2 C-LST: 11.11.11.11
+ * >      RD: 1.1.1.3:10 imet 1.1.1.3
+                                 1.1.1.3               -       100     0       i Or-ID: 1.1.1.3 C-LST: 11.11.11.11
+ * >      RD: 1.1.1.3:20 imet 1.1.1.3
+                                 1.1.1.3               -       100     0       i Or-ID: 1.1.1.3 C-LST: 11.11.11.11
+ * >      RD: 2.2.2.1:10 imet 2.2.2.1
+                                 2.2.2.1               -       100     0       65002 i
+ * >      RD: 2.2.2.1:20 imet 2.2.2.1
+                                 2.2.2.1               -       100     0       65002 i
+ * >      RD: 2.2.2.3:10 imet 2.2.2.3
+                                 2.2.2.3               -       100     0       65002 i
+ * >      RD: 2.2.2.3:20 imet 2.2.2.3
+                                 2.2.2.3               -       100     0       65002 i
+Leaf1#
+```
+
+### Делаем вывод, Vxlan фабрика между ЦОД собрана, дальнейшее развитие выполнимо согласно схеме выше.
 
